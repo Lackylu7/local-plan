@@ -219,7 +219,7 @@ button {
 }
 
 .list-section + .list-section {
-  margin-top: 26px;
+  margin-top: 24px;
 }
 
 .list-section h2 {
@@ -264,13 +264,40 @@ button {
   background: #fbfdff;
 }
 
+.tasks-area {
+  max-height: clamp(220px, calc(100vh - 392px), 560px);
+  padding-right: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scroll-behavior: smooth;
+}
+
+.tasks-area::-webkit-scrollbar {
+  width: 10px;
+}
+
+.tasks-area::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: #edf2f7;
+}
+
+.tasks-area::-webkit-scrollbar-thumb {
+  border: 2px solid #edf2f7;
+  border-radius: 999px;
+  background: #b8c4d4;
+}
+
+.tasks-area::-webkit-scrollbar-thumb:hover {
+  background: #98a7bb;
+}
+
 .task-list {
   display: grid;
   gap: 10px;
-  max-height: 52vh;
   margin: 0;
   padding: 0 2px 2px 0;
-  overflow: auto;
+  overflow: visible;
   list-style: none;
 }
 
@@ -514,6 +541,12 @@ button {
   .task-row,
   .summary {
     grid-template-columns: 1fr;
+  }
+
+  .tasks-area {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
   }
 
   .task-actions {

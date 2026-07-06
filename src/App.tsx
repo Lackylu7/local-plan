@@ -214,46 +214,48 @@ function App() {
           </div>
         </div>
 
-        <section className="list-section">
-          <h2>{text.todo}</h2>
-          {todoTasks.length === 0 ? (
-            <p className="empty">{text.empty}</p>
-          ) : (
-            <ul className="task-list">
-              {todoTasks.map((task) => (
-                <TaskRow
-                  key={task.id}
-                  task={task}
-                  onProgressChange={updateProgress}
-                  onToggle={toggleTask}
-                  onUpdate={updateTask}
-                />
-              ))}
-            </ul>
-          )}
-        </section>
-
-        {doneTasks.length > 0 && (
-          <section className="list-section done-section">
-            <div className="section-title">
-              <h2>{text.done}</h2>
-              <button type="button" className="clear-button" onClick={clearDone}>
-                {text.clearDone}
-              </button>
-            </div>
-            <ul className="task-list">
-              {doneTasks.map((task) => (
-                <TaskRow
-                  key={task.id}
-                  task={task}
-                  onProgressChange={updateProgress}
-                  onToggle={toggleTask}
-                  onUpdate={updateTask}
-                />
-              ))}
-            </ul>
+        <div className="tasks-area">
+          <section className="list-section">
+            <h2>{text.todo}</h2>
+            {todoTasks.length === 0 ? (
+              <p className="empty">{text.empty}</p>
+            ) : (
+              <ul className="task-list">
+                {todoTasks.map((task) => (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    onProgressChange={updateProgress}
+                    onToggle={toggleTask}
+                    onUpdate={updateTask}
+                  />
+                ))}
+              </ul>
+            )}
           </section>
-        )}
+
+          {doneTasks.length > 0 && (
+            <section className="list-section done-section">
+              <div className="section-title">
+                <h2>{text.done}</h2>
+                <button type="button" className="clear-button" onClick={clearDone}>
+                  {text.clearDone}
+                </button>
+              </div>
+              <ul className="task-list">
+                {doneTasks.map((task) => (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    onProgressChange={updateProgress}
+                    onToggle={toggleTask}
+                    onUpdate={updateTask}
+                  />
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
       </section>
     </main>
   );
