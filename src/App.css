@@ -1,0 +1,378 @@
+:root {
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Microsoft YaHei", sans-serif;
+  color: #162033;
+  background:
+    linear-gradient(135deg, #f7f9fc 0%, #edf4ff 42%, #f8fbf7 100%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 420px;
+  min-height: 520px;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.app {
+  display: grid;
+  min-height: 100vh;
+  padding: 30px;
+  place-items: start center;
+}
+
+.panel {
+  width: min(760px, 100%);
+  padding: 30px;
+  border: 1px solid rgba(197, 208, 224, 0.78);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 22px 70px rgba(24, 38, 70, 0.13),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.title-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.brand-mark {
+  display: grid;
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 14px;
+  color: #ffffff;
+  background: linear-gradient(145deg, #1d4ed8 0%, #2f6fed 55%, #0f9f6e 140%);
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.28);
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.app-name,
+.header h1,
+.header p {
+  margin: 0;
+}
+
+.app-name {
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.header h1 {
+  margin-top: 3px;
+  font-size: 34px;
+  line-height: 1.16;
+}
+
+.header p:not(.app-name) {
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 15px;
+}
+
+.shortcut {
+  flex: 0 0 auto;
+  padding: 8px 11px;
+  border: 1px solid #dbe4f0;
+  border-radius: 999px;
+  color: #475569;
+  background: #f8fafc;
+  box-shadow: inset 0 1px 0 #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.add-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 104px;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #dce5f2;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.add-form input {
+  min-width: 0;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: #162033;
+  background: #ffffff;
+  outline: none;
+}
+
+.add-form input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.13);
+}
+
+.add-form button,
+.task-actions button,
+.clear-button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 10px;
+  font-weight: 760;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease,
+    transform 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.add-form button {
+  min-height: 48px;
+  color: #ffffff;
+  background: #2563eb;
+  box-shadow: 0 12px 22px rgba(37, 99, 235, 0.23);
+}
+
+.add-form button:hover,
+.save-button:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0 26px;
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 58px;
+  padding: 12px 14px;
+  border: 1px solid #e0e7f0;
+  border-radius: 14px;
+  color: #64748b;
+  background: #ffffff;
+}
+
+.summary-card strong {
+  color: #111827;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.list-section + .list-section {
+  margin-top: 26px;
+}
+
+.list-section h2 {
+  margin: 0 0 12px;
+  color: #22304a;
+  font-size: 16px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.section-title h2 {
+  margin: 0;
+}
+
+.clear-button {
+  min-height: 34px;
+  padding: 0 12px;
+  color: #475569;
+  background: #edf2f7;
+  font-size: 13px;
+}
+
+.clear-button:hover,
+.edit-button:hover {
+  background: #dfe7f0;
+}
+
+.empty {
+  display: grid;
+  min-height: 112px;
+  margin: 0;
+  place-items: center;
+  border: 1px dashed #cbd6e4;
+  border-radius: 14px;
+  color: #8a97aa;
+  background: #fbfdff;
+}
+
+.task-list {
+  display: grid;
+  gap: 10px;
+  max-height: 52vh;
+  margin: 0;
+  padding: 0 2px 2px 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.task-row {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 62px;
+  padding: 12px 14px;
+  border: 1px solid #e0e7f0;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+}
+
+.task-row:hover {
+  border-color: #cbd7e8;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+}
+
+.status-dot {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #94a3b8;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.task-row.done .status-dot {
+  border-color: #16a34a;
+  background: radial-gradient(circle at center, #16a34a 0 45%, transparent 48%);
+}
+
+.task-title {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #162033;
+  font-size: 15px;
+  font-weight: 680;
+}
+
+.edit-input {
+  min-width: 0;
+  height: 42px;
+  padding: 0 11px;
+  border: 1px solid #2563eb;
+  border-radius: 10px;
+  color: #111827;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.task-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.task-actions button {
+  min-width: 66px;
+  padding: 0 12px;
+}
+
+.complete-button {
+  color: #ffffff;
+  background: #16a34a;
+}
+
+.complete-button:hover {
+  background: #12813c;
+  transform: translateY(-1px);
+}
+
+.edit-button {
+  color: #334155;
+  background: #edf2f7;
+}
+
+.save-button {
+  color: #ffffff;
+  background: #2563eb;
+}
+
+.task-row.done {
+  background: #f8fafc;
+}
+
+.task-row.done .task-title {
+  color: #667085;
+  text-decoration: line-through;
+}
+
+.task-row.done .complete-button,
+.task-row.done .edit-button {
+  color: #334155;
+  background: #e2e8f0;
+}
+
+@media (max-width: 560px) {
+  .app {
+    padding: 14px;
+  }
+
+  .panel {
+    padding: 18px;
+    border-radius: 14px;
+  }
+
+  .header,
+  .title-group {
+    display: grid;
+  }
+
+  .shortcut {
+    width: fit-content;
+  }
+
+  .add-form,
+  .task-row,
+  .summary {
+    grid-template-columns: 1fr;
+  }
+
+  .task-actions {
+    justify-content: stretch;
+  }
+
+  .task-actions button {
+    flex: 1;
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "name": "local-plan",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "desktop:dev": "concurrently -k \"npm run dev -- --host 127.0.0.1\" \"wait-on http://127.0.0.1:1420 && set LOCAL_PLAN_DEV=1&& electron .\"",
+    "desktop:start": "npm run build && electron .",
+    "package:win": "npm run build && electron-packager . \"Local Plan\" --platform=win32 --arch=x64 --out ../../outputs --overwrite --icon public/icon.ico --ignore \"^/src-tauri($|/)\" --ignore \"^/scripts/capture-electron\\.cjs$\" --ignore \"^/local-plan-screenshot\\.png$\" --ignore \"^/desktop-start\\..*\\.log$\"",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.0.2",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.6.0",
+    "concurrently": "^10.0.3",
+    "electron": "^43.0.0",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.4",
+    "wait-on": "^9.0.10"
+  }
+}
