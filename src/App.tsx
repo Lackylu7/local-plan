@@ -1,10 +1,11 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { type CSSProperties, type FormEvent, useEffect, useMemo, useState } from "react";
 import "./App.css";
 
 interface Task {
   id: string;
   title: string;
   details: string;
+  progress: number;
   done: boolean;
   createdAt: string;
   completedAt?: string;
@@ -25,6 +26,9 @@ const text = {
   add: "\u6dfb\u52a0",
   todo: "\u672a\u5b8c\u6210",
   done: "\u5df2\u5b8c\u6210",
+  progress: "\u8fdb\u5ea6",
+  averageProgress: "\u5e73\u5747\u8fdb\u5ea6",
+  progressHint: "\u62d6\u52a8\u8c03\u6574\u4efb\u52a1\u8fdb\u5ea6",
   complete: "\u5b8c\u6210",
   undo: "\u6062\u590d",
   edit: "\u7f16\u8f91",
@@ -40,6 +44,11 @@ function createId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function normalizeProgress(value: unknown) {
+  if (typeof value !== "number" || Number.isNaN(value)) return 0;
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
 function loadTasks(): Task[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -53,6 +62,12 @@ function loadTasks(): Task[] {
           id: item.id,
           title: item.title,
           details: typeof item.details === "string" ? item.details : "",
+          progress:
+            typeof item.progress === "number"
+              ? normalizeProgress(item.progress)
+              : item.done === true
+                ? 100
+                : 0,
           done: item.done === true,
           createdAt: typeof item.createdAt === "string" ? item.createdAt : new Date().toISOString(),
           completedAt: typeof item.completedAt === "string" ? item.completedAt : undefined,
@@ -75,6 +90,11 @@ function App() {
 
   const todoTasks = useMemo(() => tasks.filter((task) => !task.done), [tasks]);
   const doneTasks = useMemo(() => tasks.filter((task) => task.done), [tasks]);
+  const averageProgress = useMemo(() => {
+    if (tasks.length === 0) return 0;
+    const total = tasks.reduce((sum, task) => sum + task.progress, 0);
+    return Math.round(total / tasks.length);
+  }, [tasks]);
 
   function addTask(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -86,6 +106,7 @@ function App() {
         id: createId(),
         title: cleanTitle,
         details: details.trim(),
+        progress: 0,
         done: false,
         createdAt: new Date().toISOString(),
       },
@@ -103,6 +124,7 @@ function App() {
         return {
           ...task,
           done,
+          progress: done ? 100 : task.progress,
           completedAt: done ? new Date().toISOString() : undefined,
         };
       }),
@@ -123,6 +145,22 @@ function App() {
             }
           : task,
       ),
+    );
+  }
+
+  function updateProgress(taskId: string, nextProgress: number) {
+    const progress = normalizeProgress(nextProgress);
+    setTasks((current) =>
+      current.map((task) => {
+        if (task.id !== taskId) return task;
+        const done = progress === 100;
+        return {
+          ...task,
+          progress,
+          done,
+          completedAt: done ? (task.completedAt ?? new Date().toISOString()) : undefined,
+        };
+      }),
     );
   }
 
@@ -168,6 +206,10 @@ function App() {
             <span>{text.todo}</span>
             <strong>{todoTasks.length}</strong>
           </div>
+          <div className="summary-card progress-summary">
+            <span>{text.averageProgress}</span>
+            <strong>{averageProgress}%</strong>
+          </div>
           <div className="summary-card">
             <span>{text.done}</span>
             <strong>{doneTasks.length}</strong>
@@ -181,7 +223,13 @@ function App() {
           ) : (
             <ul className="task-list">
               {todoTasks.map((task) => (
-                <TaskRow key={task.id} task={task} onToggle={toggleTask} onUpdate={updateTask} />
+                <TaskRow
+                  key={task.id}
+                  task={task}
+                  onProgressChange={updateProgress}
+                  onToggle={toggleTask}
+                  onUpdate={updateTask}
+                />
               ))}
             </ul>
           )}
@@ -197,7 +245,13 @@ function App() {
             </div>
             <ul className="task-list">
               {doneTasks.map((task) => (
-                <TaskRow key={task.id} task={task} onToggle={toggleTask} onUpdate={updateTask} />
+                <TaskRow
+                  key={task.id}
+                  task={task}
+                  onProgressChange={updateProgress}
+                  onToggle={toggleTask}
+                  onUpdate={updateTask}
+                />
               ))}
             </ul>
           </section>
@@ -209,10 +263,12 @@ function App() {
 
 function TaskRow({
   task,
+  onProgressChange,
   onToggle,
   onUpdate,
 }: {
   task: Task;
+  onProgressChange: (taskId: string, nextProgress: number) => void;
   onToggle: (taskId: string) => void;
   onUpdate: (taskId: string, nextTitle: string, nextDetails: string) => void;
 }) {
@@ -238,8 +294,10 @@ function TaskRow({
     setIsEditing(false);
   }
 
+  const rowStyle = getProgressStyle(task.progress);
+
   return (
-    <li className={task.done ? "task-row done" : "task-row"}>
+    <li className={task.done ? "task-row done" : "task-row"} style={rowStyle}>
       <span className="status-dot" aria-hidden="true" />
       <div className="task-content">
         {isEditing ? (
@@ -275,6 +333,23 @@ function TaskRow({
             {task.details && <span className="task-details">{task.details}</span>}
           </>
         )}
+        <div className="progress-control">
+          <div className="progress-meta">
+            <span>{text.progress}</span>
+            <strong>{task.progress}%</strong>
+          </div>
+          <input
+            aria-label={`${task.title} ${text.progress}`}
+            className="progress-slider"
+            max="100"
+            min="0"
+            onChange={(event) => onProgressChange(task.id, event.currentTarget.valueAsNumber)}
+            step="1"
+            title={text.progressHint}
+            type="range"
+            value={task.progress}
+          />
+        </div>
       </div>
       <div className="task-actions">
         {isEditing ? (
@@ -299,6 +374,16 @@ function TaskRow({
       </div>
     </li>
   );
+}
+
+function getProgressStyle(progress: number): CSSProperties {
+  const hue = 214 - progress * 0.64;
+  return {
+    "--progress": `${progress}%`,
+    "--progress-border": `hsl(${hue} 64% 78%)`,
+    "--progress-color": `hsl(${hue} 72% 42%)`,
+    "--progress-soft": `hsl(${hue} 76% 96%)`,
+  } as CSSProperties;
 }
 
 export default App;

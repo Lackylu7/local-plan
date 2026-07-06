@@ -4,7 +4,8 @@
     "Microsoft YaHei", sans-serif;
   color: #162033;
   background:
-    linear-gradient(135deg, #f7f9fc 0%, #edf4ff 42%, #f8fbf7 100%);
+    linear-gradient(135deg, #f6f8fb 0%, #eef4fb 48%, #f4faf7 100%);
+  color-scheme: light;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -34,19 +35,19 @@ button {
 .app {
   display: grid;
   min-height: 100vh;
-  padding: 30px;
+  padding: 26px;
   place-items: start center;
 }
 
 .panel {
-  width: min(760px, 100%);
-  padding: 30px;
-  border: 1px solid rgba(197, 208, 224, 0.78);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.92);
+  width: min(820px, 100%);
+  padding: 26px;
+  border: 1px solid rgba(199, 210, 225, 0.88);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.95);
   box-shadow:
-    0 22px 70px rgba(24, 38, 70, 0.13),
-    inset 0 1px 0 rgba(255, 255, 255, 0.82);
+    0 18px 52px rgba(24, 38, 70, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .header {
@@ -70,7 +71,7 @@ button {
   width: 48px;
   height: 48px;
   place-items: center;
-  border-radius: 14px;
+  border-radius: 8px;
   color: #ffffff;
   background: linear-gradient(145deg, #1d4ed8 0%, #2f6fed 55%, #0f9f6e 140%);
   box-shadow: 0 12px 24px rgba(37, 99, 235, 0.28);
@@ -92,7 +93,7 @@ button {
 
 .header h1 {
   margin-top: 3px;
-  font-size: 34px;
+  font-size: 32px;
   line-height: 1.16;
 }
 
@@ -106,7 +107,7 @@ button {
   flex: 0 0 auto;
   padding: 8px 11px;
   border: 1px solid #dbe4f0;
-  border-radius: 999px;
+  border-radius: 8px;
   color: #475569;
   background: #f8fafc;
   box-shadow: inset 0 1px 0 #ffffff;
@@ -121,8 +122,8 @@ button {
   gap: 10px;
   padding: 10px;
   border: 1px solid #dce5f2;
-  border-radius: 14px;
-  background: #f8fafc;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #f8fafc 0%, #f3f7fb 100%);
 }
 
 .add-fields {
@@ -135,7 +136,7 @@ button {
 .add-form textarea {
   min-width: 0;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: 8px;
   color: #162033;
   background: #ffffff;
   outline: none;
@@ -164,7 +165,7 @@ button {
 .clear-button {
   min-height: 40px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 8px;
   font-weight: 760;
   transition:
     background-color 140ms ease,
@@ -189,9 +190,9 @@ button {
 
 .summary {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-  margin: 16px 0 26px;
+  margin: 16px 0 24px;
 }
 
 .summary-card {
@@ -201,9 +202,14 @@ button {
   min-height: 58px;
   padding: 12px 14px;
   border: 1px solid #e0e7f0;
-  border-radius: 14px;
+  border-radius: 8px;
   color: #64748b;
   background: #ffffff;
+}
+
+.progress-summary {
+  border-color: #bfd8cb;
+  background: linear-gradient(135deg, #ffffff 0%, #f2fbf6 100%);
 }
 
 .summary-card strong {
@@ -253,7 +259,7 @@ button {
   margin: 0;
   place-items: center;
   border: 1px dashed #cbd6e4;
-  border-radius: 14px;
+  border-radius: 8px;
   color: #8a97aa;
   background: #fbfdff;
 }
@@ -274,15 +280,20 @@ button {
   gap: 12px;
   align-items: start;
   min-height: 62px;
-  padding: 12px 14px;
-  border: 1px solid #e0e7f0;
-  border-radius: 14px;
-  background: #ffffff;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+  padding: 14px;
+  border: 1px solid var(--progress-border, #e0e7f0);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, var(--progress-soft, #f8fafc) 0 var(--progress, 0%), #ffffff var(--progress, 0%) 100%);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
 }
 
 .task-row:hover {
-  border-color: #cbd7e8;
+  border-color: var(--progress-color, #cbd7e8);
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
 }
 
@@ -291,7 +302,7 @@ button {
   width: 14px;
   height: 14px;
   margin-top: 4px;
-  border: 2px solid #94a3b8;
+  border: 2px solid var(--progress-color, #94a3b8);
   border-radius: 50%;
   background: #ffffff;
 }
@@ -320,11 +331,84 @@ button {
   overflow-wrap: anywhere;
   padding: 10px 12px;
   border: 1px solid #e8eef6;
-  border-radius: 10px;
+  border-radius: 8px;
   color: #526174;
-  background: #f8fafc;
+  background: rgba(248, 250, 252, 0.86);
   font-size: 13px;
   line-height: 1.55;
+}
+
+.progress-control {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.progress-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.progress-meta strong {
+  color: var(--progress-color, #2563eb);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.progress-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 24px;
+  margin: 0;
+  background: transparent;
+  accent-color: var(--progress-color, #2563eb);
+  cursor: ew-resize;
+}
+
+.progress-slider:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.18);
+  outline-offset: 2px;
+}
+
+.progress-slider::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, var(--progress-color, #2563eb) 0 var(--progress, 0%), #d9e2ee var(--progress, 0%) 100%);
+}
+
+.progress-slider::-webkit-slider-thumb {
+  width: 18px;
+  height: 18px;
+  margin-top: -5px;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  background: var(--progress-color, #2563eb);
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.22);
+  -webkit-appearance: none;
+}
+
+.progress-slider::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, var(--progress-color, #2563eb) 0 var(--progress, 0%), #d9e2ee var(--progress, 0%) 100%);
+}
+
+.progress-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  background: var(--progress-color, #2563eb);
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.22);
 }
 
 .details-label {
@@ -337,7 +421,7 @@ button {
 .edit-details {
   min-width: 0;
   border: 1px solid #2563eb;
-  border-radius: 10px;
+  border-radius: 8px;
   color: #111827;
   outline: none;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
@@ -358,6 +442,7 @@ button {
 .task-actions {
   display: flex;
   gap: 8px;
+  padding-top: 1px;
 }
 
 .task-actions button {
@@ -386,7 +471,8 @@ button {
 }
 
 .task-row.done {
-  background: #f8fafc;
+  background:
+    linear-gradient(90deg, rgba(236, 253, 245, 0.95) 0 var(--progress, 100%), #f8fafc var(--progress, 100%) 100%);
 }
 
 .task-row.done .task-title {
@@ -412,7 +498,7 @@ button {
 
   .panel {
     padding: 18px;
-    border-radius: 14px;
+    border-radius: 8px;
   }
 
   .header,

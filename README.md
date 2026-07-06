@@ -7,6 +7,8 @@ Local Plan is a minimal local desktop task list.
 - Add a task manually.
 - Add optional subtask notes under a task.
 - Edit task text and subtask notes after creating it.
+- Drag each task's progress slider from 0% to 100%.
+- Task cards change color as progress increases.
 - Click a task button to mark it done.
 - Restore a completed task if needed.
 - Clear completed tasks.
