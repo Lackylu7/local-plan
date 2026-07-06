@@ -22,7 +22,8 @@ body {
 }
 
 button,
-input {
+input,
+textarea {
   font: inherit;
 }
 
@@ -116,6 +117,7 @@ button {
 .add-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 104px;
+  align-items: stretch;
   gap: 10px;
   padding: 10px;
   border: 1px solid #dce5f2;
@@ -123,10 +125,15 @@ button {
   background: #f8fafc;
 }
 
-.add-form input {
+.add-fields {
+  display: grid;
+  gap: 8px;
   min-width: 0;
-  height: 48px;
-  padding: 0 14px;
+}
+
+.add-form input,
+.add-form textarea {
+  min-width: 0;
   border: 1px solid transparent;
   border-radius: 10px;
   color: #162033;
@@ -134,7 +141,20 @@ button {
   outline: none;
 }
 
-.add-form input:focus {
+.add-form input {
+  height: 48px;
+  padding: 0 14px;
+}
+
+.add-form textarea {
+  min-height: 76px;
+  resize: vertical;
+  padding: 12px 14px;
+  line-height: 1.5;
+}
+
+.add-form input:focus,
+.add-form textarea:focus {
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.13);
 }
@@ -154,6 +174,7 @@ button {
 }
 
 .add-form button {
+  align-self: stretch;
   min-height: 48px;
   color: #ffffff;
   background: #2563eb;
@@ -251,7 +272,7 @@ button {
   display: grid;
   grid-template-columns: 18px minmax(0, 1fr) auto;
   gap: 12px;
-  align-items: center;
+  align-items: start;
   min-height: 62px;
   padding: 12px 14px;
   border: 1px solid #e0e7f0;
@@ -269,6 +290,7 @@ button {
   display: block;
   width: 14px;
   height: 14px;
+  margin-top: 4px;
   border: 2px solid #94a3b8;
   border-radius: 50%;
   background: #ffffff;
@@ -279,6 +301,12 @@ button {
   background: radial-gradient(circle at center, #16a34a 0 45%, transparent 48%);
 }
 
+.task-content {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
 .task-title {
   min-width: 0;
   overflow-wrap: anywhere;
@@ -287,15 +315,44 @@ button {
   font-weight: 680;
 }
 
-.edit-input {
+.task-details {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 10px 12px;
+  border: 1px solid #e8eef6;
+  border-radius: 10px;
+  color: #526174;
+  background: #f8fafc;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.details-label {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.edit-input,
+.edit-details {
   min-width: 0;
-  height: 42px;
-  padding: 0 11px;
   border: 1px solid #2563eb;
   border-radius: 10px;
   color: #111827;
   outline: none;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.edit-input {
+  height: 42px;
+  padding: 0 11px;
+}
+
+.edit-details {
+  min-height: 84px;
+  resize: vertical;
+  padding: 10px 11px;
+  line-height: 1.5;
 }
 
 .task-actions {
@@ -335,6 +392,11 @@ button {
 .task-row.done .task-title {
   color: #667085;
   text-decoration: line-through;
+}
+
+.task-row.done .task-details {
+  color: #7b8798;
+  background: #f1f5f9;
 }
 
 .task-row.done .complete-button,

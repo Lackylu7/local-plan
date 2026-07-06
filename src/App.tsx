@@ -4,6 +4,7 @@ import "./App.css";
 interface Task {
   id: string;
   title: string;
+  details: string;
   done: boolean;
   createdAt: string;
   completedAt?: string;
@@ -14,9 +15,13 @@ const STORAGE_KEY = "local-plan-simple-tasks-v1";
 const text = {
   appName: "Local Plan",
   title: "\u4efb\u52a1\u6e05\u5355",
-  subtitle: "\u624b\u52a8\u6dfb\u52a0\uff0c\u5b8c\u6210\u5c31\u70b9\u4e00\u4e0b\u3002",
+  subtitle:
+    "\u624b\u52a8\u6dfb\u52a0\uff0c\u5b8c\u6210\u5c31\u70b9\u4e00\u4e0b\uff0c\u5c0f\u4efb\u52a1\u4e5f\u80fd\u968f\u65f6\u8bb0\u3002",
   shortcut: "Ctrl + Alt + Space",
   placeholder: "\u8f93\u5165\u4e00\u4e2a\u4efb\u52a1...",
+  detailsPlaceholder:
+    "\u8865\u5145\u5c0f\u4efb\u52a1 / \u5907\u6ce8\uff0c\u53ef\u4e00\u884c\u4e00\u4e2a...",
+  detailsLabel: "\u5c0f\u4efb\u52a1 / \u5907\u6ce8",
   add: "\u6dfb\u52a0",
   todo: "\u672a\u5b8c\u6210",
   done: "\u5df2\u5b8c\u6210",
@@ -41,8 +46,18 @@ function loadTasks(): Task[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter((item): item is Task => {
-      return typeof item?.id === "string" && typeof item?.title === "string";
+    return parsed.flatMap((item): Task[] => {
+      if (typeof item?.id !== "string" || typeof item?.title !== "string") return [];
+      return [
+        {
+          id: item.id,
+          title: item.title,
+          details: typeof item.details === "string" ? item.details : "",
+          done: item.done === true,
+          createdAt: typeof item.createdAt === "string" ? item.createdAt : new Date().toISOString(),
+          completedAt: typeof item.completedAt === "string" ? item.completedAt : undefined,
+        },
+      ];
     });
   } catch {
     return [];
@@ -52,6 +67,7 @@ function loadTasks(): Task[] {
 function App() {
   const [tasks, setTasks] = useState<Task[]>(() => loadTasks());
   const [title, setTitle] = useState("");
+  const [details, setDetails] = useState("");
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
@@ -69,12 +85,14 @@ function App() {
       {
         id: createId(),
         title: cleanTitle,
+        details: details.trim(),
         done: false,
         createdAt: new Date().toISOString(),
       },
       ...current,
     ]);
     setTitle("");
+    setDetails("");
   }
 
   function toggleTask(taskId: string) {
@@ -91,7 +109,7 @@ function App() {
     );
   }
 
-  function renameTask(taskId: string, nextTitle: string) {
+  function updateTask(taskId: string, nextTitle: string, nextDetails: string) {
     const cleanTitle = nextTitle.trim();
     if (!cleanTitle) return;
 
@@ -101,6 +119,7 @@ function App() {
           ? {
               ...task,
               title: cleanTitle,
+              details: nextDetails.trim(),
             }
           : task,
       ),
@@ -127,12 +146,20 @@ function App() {
         </header>
 
         <form className="add-form" onSubmit={addTask}>
-          <input
-            autoFocus
-            value={title}
-            onChange={(event) => setTitle(event.currentTarget.value)}
-            placeholder={text.placeholder}
-          />
+          <div className="add-fields">
+            <input
+              autoFocus
+              value={title}
+              onChange={(event) => setTitle(event.currentTarget.value)}
+              placeholder={text.placeholder}
+            />
+            <textarea
+              value={details}
+              onChange={(event) => setDetails(event.currentTarget.value)}
+              placeholder={text.detailsPlaceholder}
+              rows={3}
+            />
+          </div>
           <button type="submit">{text.add}</button>
         </form>
 
@@ -154,7 +181,7 @@ function App() {
           ) : (
             <ul className="task-list">
               {todoTasks.map((task) => (
-                <TaskRow key={task.id} task={task} onToggle={toggleTask} onRename={renameTask} />
+                <TaskRow key={task.id} task={task} onToggle={toggleTask} onUpdate={updateTask} />
               ))}
             </ul>
           )}
@@ -170,7 +197,7 @@ function App() {
             </div>
             <ul className="task-list">
               {doneTasks.map((task) => (
-                <TaskRow key={task.id} task={task} onToggle={toggleTask} onRename={renameTask} />
+                <TaskRow key={task.id} task={task} onToggle={toggleTask} onUpdate={updateTask} />
               ))}
             </ul>
           </section>
@@ -183,48 +210,72 @@ function App() {
 function TaskRow({
   task,
   onToggle,
-  onRename,
+  onUpdate,
 }: {
   task: Task;
   onToggle: (taskId: string) => void;
-  onRename: (taskId: string, nextTitle: string) => void;
+  onUpdate: (taskId: string, nextTitle: string, nextDetails: string) => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [draftTitle, setDraftTitle] = useState(task.title);
+  const [draftDetails, setDraftDetails] = useState(task.details);
 
   function startEditing() {
     setDraftTitle(task.title);
+    setDraftDetails(task.details);
     setIsEditing(true);
   }
 
   function cancelEditing() {
     setDraftTitle(task.title);
+    setDraftDetails(task.details);
     setIsEditing(false);
   }
 
   function saveEditing() {
     if (!draftTitle.trim()) return;
-    onRename(task.id, draftTitle);
+    onUpdate(task.id, draftTitle, draftDetails);
     setIsEditing(false);
   }
 
   return (
     <li className={task.done ? "task-row done" : "task-row"}>
       <span className="status-dot" aria-hidden="true" />
-      {isEditing ? (
-        <input
-          className="edit-input"
-          value={draftTitle}
-          onChange={(event) => setDraftTitle(event.currentTarget.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") saveEditing();
-            if (event.key === "Escape") cancelEditing();
-          }}
-          autoFocus
-        />
-      ) : (
-        <span className="task-title">{task.title}</span>
-      )}
+      <div className="task-content">
+        {isEditing ? (
+          <>
+            <input
+              className="edit-input"
+              value={draftTitle}
+              onChange={(event) => setDraftTitle(event.currentTarget.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") saveEditing();
+                if (event.key === "Escape") cancelEditing();
+              }}
+              autoFocus
+            />
+            <label className="details-label" htmlFor={`details-${task.id}`}>
+              {text.detailsLabel}
+            </label>
+            <textarea
+              id={`details-${task.id}`}
+              className="edit-details"
+              value={draftDetails}
+              onChange={(event) => setDraftDetails(event.currentTarget.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") cancelEditing();
+              }}
+              placeholder={text.detailsPlaceholder}
+              rows={3}
+            />
+          </>
+        ) : (
+          <>
+            <span className="task-title">{task.title}</span>
+            {task.details && <span className="task-details">{task.details}</span>}
+          </>
+        )}
+      </div>
       <div className="task-actions">
         {isEditing ? (
           <>

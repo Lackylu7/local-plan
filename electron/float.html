@@ -30,16 +30,36 @@
         box-shadow:
           0 12px 30px rgba(37, 99, 235, 0.34),
           inset 0 1px 0 rgba(255, 255, 255, 0.28);
-        cursor: pointer;
+        cursor: grab;
         font-size: 14px;
         font-weight: 800;
+        touch-action: none;
+        user-select: none;
         transition:
           transform 140ms ease,
           box-shadow 140ms ease,
           filter 140ms ease;
       }
 
-      button:hover {
+      body[data-edge="left"] button {
+        border-radius: 5px 18px 18px 5px;
+      }
+
+      body[data-edge="top"] button {
+        border-radius: 5px 5px 18px 18px;
+      }
+
+      body[data-edge="bottom"] button {
+        border-radius: 18px 18px 5px 5px;
+      }
+
+      body.dragging button {
+        cursor: grabbing;
+        transition: none;
+        transform: scale(0.98);
+      }
+
+      body:not(.dragging) button:hover {
         filter: brightness(1.03);
         transform: translateX(-2px);
         box-shadow:
@@ -48,12 +68,68 @@
       }
     </style>
   </head>
-  <body>
-    <button type="button" title="打开 Local Plan">LP</button>
+  <body data-edge="right">
+    <button type="button" title="&#25171;&#24320; Local Plan&#65292;&#25302;&#21160;&#21487;&#31227;&#21160;">LP</button>
     <script>
-      document.querySelector("button").addEventListener("click", () => {
-        window.localPlanFloat.open();
+      const button = document.querySelector("button");
+      let dragging = false;
+      let moved = false;
+      let pointerId = null;
+      let startX = 0;
+      let startY = 0;
+      let offsetX = 0;
+      let offsetY = 0;
+
+      function setEdge(edge) {
+        document.body.dataset.edge = edge || "right";
+      }
+
+      function releasePointer() {
+        if (pointerId === null || !button.hasPointerCapture(pointerId)) return;
+        button.releasePointerCapture(pointerId);
+      }
+
+      button.addEventListener("pointerdown", (event) => {
+        if (event.button !== 0) return;
+        event.preventDefault();
+        dragging = true;
+        moved = false;
+        pointerId = event.pointerId;
+        startX = event.screenX;
+        startY = event.screenY;
+        offsetX = event.clientX;
+        offsetY = event.clientY;
+        document.body.classList.add("dragging");
+        button.setPointerCapture(pointerId);
       });
+
+      button.addEventListener("pointermove", (event) => {
+        if (!dragging || event.pointerId !== pointerId) return;
+        const distance = Math.hypot(event.screenX - startX, event.screenY - startY);
+        if (!moved && distance < 4) return;
+        moved = true;
+        window.localPlanFloat.move(event.screenX - offsetX, event.screenY - offsetY);
+      });
+
+      async function finishPointer(event) {
+        if (!dragging || event.pointerId !== pointerId) return;
+        const shouldOpen = !moved;
+        dragging = false;
+        document.body.classList.remove("dragging");
+        releasePointer();
+        pointerId = null;
+
+        if (shouldOpen) {
+          window.localPlanFloat.open();
+          return;
+        }
+
+        const edge = await window.localPlanFloat.snap();
+        setEdge(edge);
+      }
+
+      button.addEventListener("pointerup", finishPointer);
+      button.addEventListener("pointercancel", finishPointer);
     </script>
   </body>
 </html>
