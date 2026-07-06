@@ -151,16 +151,14 @@ function App() {
   function updateProgress(taskId: string, nextProgress: number) {
     const progress = normalizeProgress(nextProgress);
     setTasks((current) =>
-      current.map((task) => {
-        if (task.id !== taskId) return task;
-        const done = progress === 100;
-        return {
-          ...task,
-          progress,
-          done,
-          completedAt: done ? (task.completedAt ?? new Date().toISOString()) : undefined,
-        };
-      }),
+      current.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              progress,
+            }
+          : task,
+      ),
     );
   }
 
