@@ -92,7 +92,7 @@ function snapFloatWindowToNearestEdge() {
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 760,
-    height: 680,
+    height: 820,
     minWidth: 420,
     minHeight: 520,
     title: "Local Plan",
