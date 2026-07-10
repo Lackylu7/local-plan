@@ -4,6 +4,7 @@ const path = require("node:path");
 let mainWindow;
 let floatWindow;
 let tray;
+let isFloatVisible = true;
 
 const devUrl = "http://127.0.0.1:1420";
 const iconPath = path.join(__dirname, "..", "public", "icon.ico");
@@ -29,6 +30,20 @@ function positionFloatWindow() {
     width: floatSize,
     height: floatSize,
   });
+}
+
+function setFloatVisible(visible) {
+  isFloatVisible = visible;
+  if (!floatWindow) return isFloatVisible;
+
+  if (visible) {
+    floatWindow.showInactive();
+    floatWindow.setAlwaysOnTop(true, "floating");
+  } else {
+    floatWindow.hide();
+  }
+
+  return isFloatVisible;
 }
 
 function clamp(value, min, max) {
@@ -100,6 +115,7 @@ function createWindow() {
     icon: iconPath,
     show: false,
     webPreferences: {
+      preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
@@ -146,6 +162,7 @@ function createFloatWindow() {
   floatWindow.loadFile(path.join(__dirname, "float.html"));
   floatWindow.setAlwaysOnTop(true, "floating");
   positionFloatWindow();
+  setFloatVisible(isFloatVisible);
 
   screen.on("display-metrics-changed", positionFloatWindow);
   screen.on("display-added", positionFloatWindow);
@@ -181,6 +198,13 @@ function registerShortcut() {
 
 ipcMain.handle("local-plan:show-main", () => {
   showMainWindow();
+});
+
+ipcMain.handle("local-plan:get-float-visible", () => isFloatVisible);
+
+ipcMain.handle("local-plan:set-float-visible", (_event, visible) => {
+  if (typeof visible !== "boolean") return isFloatVisible;
+  return setFloatVisible(visible);
 });
 
 ipcMain.on("local-plan:move-float", (_event, point) => {

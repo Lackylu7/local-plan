@@ -16,6 +16,7 @@ Local Plan is a minimal local desktop task list.
 - Keep tasks locally in the app storage.
 - Press `Ctrl + Alt + Space` to show the app while it is running.
 - Use the floating `LP` button to open the app, drag it around the screen, and release to snap it to the nearest screen edge.
+- Show or hide the floating `LP` button from the main window.
 
 No categories, no reminders, no due dates, no preset tasks.
 

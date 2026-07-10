@@ -11,7 +11,19 @@ interface Task {
   completedAt?: string;
 }
 
+interface LocalPlanSettingsApi {
+  getFloatVisible: () => Promise<boolean>;
+  setFloatVisible: (visible: boolean) => Promise<boolean>;
+}
+
+declare global {
+  interface Window {
+    localPlanSettings?: LocalPlanSettingsApi;
+  }
+}
+
 const STORAGE_KEY = "local-plan-simple-tasks-v1";
+const FLOAT_VISIBLE_KEY = "local-plan-float-visible-v1";
 
 const text = {
   appName: "Local Plan",
@@ -36,6 +48,8 @@ const text = {
   cancel: "\u53d6\u6d88",
   empty: "\u8fd8\u6ca1\u6709\u4efb\u52a1\uff0c\u5148\u6dfb\u52a0\u4e00\u4e2a\u3002",
   clearDone: "\u6e05\u9664\u5df2\u5b8c\u6210",
+  hideFloatButton: "\u9690\u85cf\u60ac\u6d6e\u6309\u94ae",
+  showFloatButton: "\u663e\u793a\u60ac\u6d6e\u6309\u94ae",
   brand: "LP",
 };
 
@@ -79,14 +93,26 @@ function loadTasks(): Task[] {
   }
 }
 
+function loadFloatVisible() {
+  return localStorage.getItem(FLOAT_VISIBLE_KEY) !== "false";
+}
+
 function App() {
   const [tasks, setTasks] = useState<Task[]>(() => loadTasks());
   const [title, setTitle] = useState("");
   const [details, setDetails] = useState("");
+  const [floatVisible, setFloatVisible] = useState(() => loadFloatVisible());
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
   }, [tasks]);
+
+  useEffect(() => {
+    localStorage.setItem(FLOAT_VISIBLE_KEY, String(floatVisible));
+    window.localPlanSettings?.setFloatVisible(floatVisible).then((confirmedVisible) => {
+      if (confirmedVisible !== floatVisible) setFloatVisible(confirmedVisible);
+    });
+  }, [floatVisible]);
 
   const todoTasks = useMemo(() => tasks.filter((task) => !task.done), [tasks]);
   const doneTasks = useMemo(() => tasks.filter((task) => task.done), [tasks]);
@@ -178,7 +204,17 @@ function App() {
               <p>{text.subtitle}</p>
             </div>
           </div>
-          <span className="shortcut">{text.shortcut}</span>
+          <div className="header-tools">
+            <button
+              type="button"
+              className={floatVisible ? "float-toggle active" : "float-toggle"}
+              onClick={() => setFloatVisible((current) => !current)}
+              aria-pressed={floatVisible}
+            >
+              {floatVisible ? text.hideFloatButton : text.showFloatButton}
+            </button>
+            <span className="shortcut">{text.shortcut}</span>
+          </div>
         </header>
 
         <form className="add-form" onSubmit={addTask}>
