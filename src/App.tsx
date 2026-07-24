@@ -11,6 +11,13 @@ interface Task {
   completedAt?: string;
 }
 
+interface Note {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: string;
+}
+
 interface LocalPlanSettingsApi {
   getFloatVisible: () => Promise<boolean>;
   setFloatVisible: (visible: boolean) => Promise<boolean>;
@@ -23,14 +30,17 @@ declare global {
 }
 
 const STORAGE_KEY = "local-plan-simple-tasks-v1";
+const NOTES_STORAGE_KEY = "local-plan-simple-notes-v1";
 const FLOAT_VISIBLE_KEY = "local-plan-float-visible-v1";
 
 const text = {
   appName: "Local Plan",
-  title: "\u4efb\u52a1\u6e05\u5355",
+  title: "\u4efb\u52a1\u4e0e\u7b14\u8bb0",
   subtitle:
-    "\u624b\u52a8\u6dfb\u52a0\uff0c\u5b8c\u6210\u5c31\u70b9\u4e00\u4e0b\uff0c\u5c0f\u4efb\u52a1\u4e5f\u80fd\u968f\u65f6\u8bb0\u3002",
+    "\u8bb0\u4e0b\u8981\u505a\u7684\u4e8b\uff0c\u4e5f\u7559\u4f4f\u968f\u65f6\u60f3\u5230\u7684\u5185\u5bb9\u3002",
   shortcut: "Ctrl + Alt + Space",
+  tasksTab: "\u4efb\u52a1",
+  notesTab: "\u7b14\u8bb0",
   placeholder: "\u8f93\u5165\u4e00\u4e2a\u4efb\u52a1...",
   detailsPlaceholder:
     "\u8865\u5145\u5c0f\u4efb\u52a1 / \u5907\u6ce8\uff0c\u53ef\u4e00\u884c\u4e00\u4e2a...",
@@ -46,8 +56,16 @@ const text = {
   edit: "\u7f16\u8f91",
   save: "\u4fdd\u5b58",
   cancel: "\u53d6\u6d88",
+  delete: "\u5220\u9664",
   empty: "\u8fd8\u6ca1\u6709\u4efb\u52a1\uff0c\u5148\u6dfb\u52a0\u4e00\u4e2a\u3002",
   clearDone: "\u6e05\u9664\u5df2\u5b8c\u6210",
+  deleteTaskConfirm: "\u786e\u5b9a\u5220\u9664\u8fd9\u4e2a\u4efb\u52a1\u5417\uff1f",
+  noteTitlePlaceholder: "\u7b14\u8bb0\u6807\u9898...",
+  noteContentPlaceholder: "\u5199\u4e0b\u7b14\u8bb0\u5185\u5bb9...",
+  addNote: "\u6dfb\u52a0\u7b14\u8bb0",
+  notesCount: "\u7b14\u8bb0\u6570\u91cf",
+  notesEmpty: "\u8fd8\u6ca1\u6709\u7b14\u8bb0\uff0c\u628a\u521a\u60f3\u5230\u7684\u5185\u5bb9\u8bb0\u4e0b\u6765\u5427\u3002",
+  deleteNoteConfirm: "\u786e\u5b9a\u5220\u9664\u8fd9\u7bc7\u7b14\u8bb0\u5417\uff1f",
   hideFloatButton: "\u9690\u85cf\u60ac\u6d6e\u6309\u94ae",
   showFloatButton: "\u663e\u793a\u60ac\u6d6e\u6309\u94ae",
   brand: "LP",
@@ -93,19 +111,55 @@ function loadTasks(): Task[] {
   }
 }
 
+function loadNotes(): Note[] {
+  try {
+    const raw = localStorage.getItem(NOTES_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.flatMap((item): Note[] => {
+      if (
+        typeof item?.id !== "string" ||
+        typeof item?.title !== "string" ||
+        typeof item?.content !== "string"
+      ) {
+        return [];
+      }
+      return [
+        {
+          id: item.id,
+          title: item.title,
+          content: item.content,
+          createdAt: typeof item.createdAt === "string" ? item.createdAt : new Date().toISOString(),
+        },
+      ];
+    });
+  } catch {
+    return [];
+  }
+}
+
 function loadFloatVisible() {
   return localStorage.getItem(FLOAT_VISIBLE_KEY) !== "false";
 }
 
 function App() {
   const [tasks, setTasks] = useState<Task[]>(() => loadTasks());
+  const [notes, setNotes] = useState<Note[]>(() => loadNotes());
+  const [activeView, setActiveView] = useState<"tasks" | "notes">("tasks");
   const [title, setTitle] = useState("");
   const [details, setDetails] = useState("");
+  const [noteTitle, setNoteTitle] = useState("");
+  const [noteContent, setNoteContent] = useState("");
   const [floatVisible, setFloatVisible] = useState(() => loadFloatVisible());
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
   }, [tasks]);
+
+  useEffect(() => {
+    localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes));
+  }, [notes]);
 
   useEffect(() => {
     localStorage.setItem(FLOAT_VISIBLE_KEY, String(floatVisible));
@@ -188,8 +242,37 @@ function App() {
     );
   }
 
+  function deleteTask(taskId: string) {
+    if (!window.confirm(text.deleteTaskConfirm)) return;
+    setTasks((current) => current.filter((task) => task.id !== taskId));
+  }
+
   function clearDone() {
     setTasks((current) => current.filter((task) => !task.done));
+  }
+
+  function addNote(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const cleanTitle = noteTitle.trim();
+    const cleanContent = noteContent.trim();
+    if (!cleanTitle || !cleanContent) return;
+
+    setNotes((current) => [
+      {
+        id: createId(),
+        title: cleanTitle,
+        content: cleanContent,
+        createdAt: new Date().toISOString(),
+      },
+      ...current,
+    ]);
+    setNoteTitle("");
+    setNoteContent("");
+  }
+
+  function deleteNote(noteId: string) {
+    if (!window.confirm(text.deleteNoteConfirm)) return;
+    setNotes((current) => current.filter((note) => note.id !== noteId));
   }
 
   return (
@@ -217,81 +300,161 @@ function App() {
           </div>
         </header>
 
-        <form className="add-form" onSubmit={addTask}>
-          <div className="add-fields">
-            <input
-              autoFocus
-              value={title}
-              onChange={(event) => setTitle(event.currentTarget.value)}
-              placeholder={text.placeholder}
-            />
-            <textarea
-              value={details}
-              onChange={(event) => setDetails(event.currentTarget.value)}
-              placeholder={text.detailsPlaceholder}
-              rows={3}
-            />
-          </div>
-          <button type="submit">{text.add}</button>
-        </form>
-
-        <div className="summary" aria-label="task summary">
-          <div className="summary-card">
-            <span>{text.todo}</span>
-            <strong>{todoTasks.length}</strong>
-          </div>
-          <div className="summary-card progress-summary">
-            <span>{text.averageProgress}</span>
-            <strong>{averageProgress}%</strong>
-          </div>
-          <div className="summary-card">
-            <span>{text.done}</span>
-            <strong>{doneTasks.length}</strong>
-          </div>
+        <div className="view-tabs" role="tablist" aria-label="content view">
+          <button
+            type="button"
+            className={activeView === "tasks" ? "view-tab active" : "view-tab"}
+            onClick={() => setActiveView("tasks")}
+            role="tab"
+            aria-selected={activeView === "tasks"}
+          >
+            {text.tasksTab}
+            <span>{tasks.length}</span>
+          </button>
+          <button
+            type="button"
+            className={activeView === "notes" ? "view-tab active" : "view-tab"}
+            onClick={() => setActiveView("notes")}
+            role="tab"
+            aria-selected={activeView === "notes"}
+          >
+            {text.notesTab}
+            <span>{notes.length}</span>
+          </button>
         </div>
 
-        <div className="tasks-area">
-          <section className="list-section">
-            <h2>{text.todo}</h2>
-            {todoTasks.length === 0 ? (
-              <p className="empty">{text.empty}</p>
-            ) : (
-              <ul className="task-list">
-                {todoTasks.map((task) => (
-                  <TaskRow
-                    key={task.id}
-                    task={task}
-                    onProgressChange={updateProgress}
-                    onToggle={toggleTask}
-                    onUpdate={updateTask}
-                  />
-                ))}
-              </ul>
-            )}
-          </section>
-
-          {doneTasks.length > 0 && (
-            <section className="list-section done-section">
-              <div className="section-title">
-                <h2>{text.done}</h2>
-                <button type="button" className="clear-button" onClick={clearDone}>
-                  {text.clearDone}
-                </button>
+        {activeView === "tasks" ? (
+          <>
+            <form className="add-form" onSubmit={addTask}>
+              <div className="add-fields">
+                <input
+                  autoFocus
+                  value={title}
+                  onChange={(event) => setTitle(event.currentTarget.value)}
+                  placeholder={text.placeholder}
+                />
+                <textarea
+                  value={details}
+                  onChange={(event) => setDetails(event.currentTarget.value)}
+                  placeholder={text.detailsPlaceholder}
+                  rows={3}
+                />
               </div>
-              <ul className="task-list">
-                {doneTasks.map((task) => (
-                  <TaskRow
-                    key={task.id}
-                    task={task}
-                    onProgressChange={updateProgress}
-                    onToggle={toggleTask}
-                    onUpdate={updateTask}
-                  />
-                ))}
-              </ul>
-            </section>
-          )}
-        </div>
+              <button type="submit">{text.add}</button>
+            </form>
+
+            <div className="summary" aria-label="task summary">
+              <div className="summary-card">
+                <span>{text.todo}</span>
+                <strong>{todoTasks.length}</strong>
+              </div>
+              <div className="summary-card progress-summary">
+                <span>{text.averageProgress}</span>
+                <strong>{averageProgress}%</strong>
+              </div>
+              <div className="summary-card">
+                <span>{text.done}</span>
+                <strong>{doneTasks.length}</strong>
+              </div>
+            </div>
+
+            <div className="content-scroll">
+              <section className="list-section">
+                <h2>{text.todo}</h2>
+                {todoTasks.length === 0 ? (
+                  <p className="empty">{text.empty}</p>
+                ) : (
+                  <ul className="task-list">
+                    {todoTasks.map((task) => (
+                      <TaskRow
+                        key={task.id}
+                        task={task}
+                        onDelete={deleteTask}
+                        onProgressChange={updateProgress}
+                        onToggle={toggleTask}
+                        onUpdate={updateTask}
+                      />
+                    ))}
+                  </ul>
+                )}
+              </section>
+
+              {doneTasks.length > 0 && (
+                <section className="list-section done-section">
+                  <div className="section-title">
+                    <h2>{text.done}</h2>
+                    <button type="button" className="clear-button" onClick={clearDone}>
+                      {text.clearDone}
+                    </button>
+                  </div>
+                  <ul className="task-list">
+                    {doneTasks.map((task) => (
+                      <TaskRow
+                        key={task.id}
+                        task={task}
+                        onDelete={deleteTask}
+                        onProgressChange={updateProgress}
+                        onToggle={toggleTask}
+                        onUpdate={updateTask}
+                      />
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <form className="add-form note-form" onSubmit={addNote}>
+              <div className="add-fields">
+                <input
+                  autoFocus
+                  value={noteTitle}
+                  onChange={(event) => setNoteTitle(event.currentTarget.value)}
+                  placeholder={text.noteTitlePlaceholder}
+                />
+                <textarea
+                  value={noteContent}
+                  onChange={(event) => setNoteContent(event.currentTarget.value)}
+                  placeholder={text.noteContentPlaceholder}
+                  rows={5}
+                />
+              </div>
+              <button type="submit">{text.addNote}</button>
+            </form>
+
+            <div className="notes-heading">
+              <h2>{text.notesTab}</h2>
+              <span>
+                {text.notesCount} {notes.length}
+              </span>
+            </div>
+
+            <div className="content-scroll notes-scroll">
+              {notes.length === 0 ? (
+                <p className="empty">{text.notesEmpty}</p>
+              ) : (
+                <ul className="notes-list">
+                  {notes.map((note) => (
+                    <li className="note-card" key={note.id}>
+                      <div className="note-card-header">
+                        <h3>{note.title}</h3>
+                        <button
+                          type="button"
+                          className="delete-button"
+                          onClick={() => deleteNote(note.id)}
+                        >
+                          {text.delete}
+                        </button>
+                      </div>
+                      <p>{note.content}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </>
+        )}
       </section>
     </main>
   );
@@ -302,11 +465,13 @@ function TaskRow({
   onProgressChange,
   onToggle,
   onUpdate,
+  onDelete,
 }: {
   task: Task;
   onProgressChange: (taskId: string, nextProgress: number) => void;
   onToggle: (taskId: string) => void;
   onUpdate: (taskId: string, nextTitle: string, nextDetails: string) => void;
+  onDelete: (taskId: string) => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [draftTitle, setDraftTitle] = useState(task.title);
@@ -404,6 +569,9 @@ function TaskRow({
             </button>
             <button type="button" className="edit-button" onClick={startEditing}>
               {text.edit}
+            </button>
+            <button type="button" className="delete-button" onClick={() => onDelete(task.id)}>
+              {text.delete}
             </button>
           </>
         )}
