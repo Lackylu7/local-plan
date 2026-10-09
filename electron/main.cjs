@@ -1,10 +1,13 @@
-const { app, BrowserWindow, Menu, Tray, globalShortcut, ipcMain, screen } = require("electron");
+const { app, BrowserWindow, Menu, Tray, dialog, globalShortcut, ipcMain, screen } = require("electron");
+const fs = require("node:fs/promises");
 const path = require("node:path");
 
 let mainWindow;
 let floatWindow;
 let tray;
 let isFloatVisible = true;
+let hasShownTrayNotice = false;
+let trayNoticeMarkerPath;
 
 const devUrl = "http://127.0.0.1:1420";
 const iconPath = path.join(__dirname, "..", "public", "icon.ico");
@@ -114,6 +117,7 @@ function createWindow() {
     backgroundColor: "#f7f9fc",
     icon: iconPath,
     show: false,
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
@@ -129,11 +133,23 @@ function createWindow() {
   }
 
   mainWindow.once("ready-to-show", showMainWindow);
+  mainWindow.setMenuBarVisibility(false);
 
   mainWindow.on("close", (event) => {
     if (app.isQuitting) return;
     event.preventDefault();
     mainWindow.hide();
+    if (!hasShownTrayNotice && tray) {
+      hasShownTrayNotice = true;
+      tray.displayBalloon({
+        title: "Local Plan 仍在运行",
+        content: "窗口已隐藏到系统托盘，可从托盘图标重新打开。",
+        iconType: "info",
+      });
+      if (trayNoticeMarkerPath) {
+        fs.writeFile(trayNoticeMarkerPath, "shown", "utf8").catch(() => {});
+      }
+    }
   });
 }
 
@@ -174,11 +190,11 @@ function createTray() {
   tray.setToolTip("Local Plan");
   tray.setContextMenu(
     Menu.buildFromTemplate([
-      { label: "Open Local Plan", click: showMainWindow },
-      { label: "Hide", click: () => mainWindow?.hide() },
+      { label: "打开 Local Plan", click: showMainWindow },
+      { label: "隐藏窗口", click: () => mainWindow?.hide() },
       { type: "separator" },
       {
-        label: "Quit",
+        label: "退出",
         click: () => {
           app.isQuitting = true;
           app.quit();
@@ -214,7 +230,89 @@ ipcMain.on("local-plan:move-float", (_event, point) => {
 
 ipcMain.handle("local-plan:snap-float", () => snapFloatWindowToNearestEdge());
 
-app.whenReady().then(() => {
+ipcMain.handle("local-plan:export-backup", async (_event, payload) => {
+  if (typeof payload?.content !== "string" || typeof payload?.suggestedName !== "string") {
+    return { status: "error", error: "Invalid backup export request." };
+  }
+
+  const suggestedName = path.basename(payload.suggestedName).replace(/[<>:"/\\|?*]/g, "-");
+  try {
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: "导出 Local Plan 备份",
+      defaultPath: path.join(app.getPath("documents"), suggestedName),
+      filters: [{ name: "JSON 备份", extensions: ["json"] }],
+    });
+    if (result.canceled || !result.filePath) return { status: "cancelled" };
+
+    await fs.writeFile(result.filePath, payload.content, "utf8");
+    return { status: "saved", path: result.filePath };
+  } catch (error) {
+    return { status: "error", error: error instanceof Error ? error.message : "Backup export failed." };
+  }
+});
+
+ipcMain.handle("local-plan:import-backup", async () => {
+  try {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: "导入 Local Plan 备份",
+      properties: ["openFile"],
+      filters: [{ name: "JSON 备份", extensions: ["json"] }],
+    });
+    if (result.canceled || result.filePaths.length === 0) return { status: "cancelled" };
+
+    const content = await fs.readFile(result.filePaths[0], "utf8");
+    return { status: "selected", content, path: result.filePaths[0] };
+  } catch (error) {
+    return { status: "error", error: error instanceof Error ? error.message : "Backup import failed." };
+  }
+});
+
+ipcMain.handle("local-plan:auto-backup", async (_event, payload) => {
+  if (typeof payload?.content !== "string") {
+    return { status: "error", error: "Invalid automatic backup request." };
+  }
+
+  try {
+    const savedAt = new Date();
+    const backupDirectory = path.join(app.getPath("userData"), "backups");
+    const fileName = `local-plan-auto-${savedAt.toISOString().slice(0, 10)}.json`;
+    const filePath = path.join(backupDirectory, fileName);
+    await fs.mkdir(backupDirectory, { recursive: true });
+    await fs.writeFile(filePath, payload.content, "utf8");
+
+    const entries = await fs.readdir(backupDirectory, { withFileTypes: true });
+    const backupFiles = await Promise.all(
+      entries
+        .filter((entry) => entry.isFile() && entry.name.startsWith("local-plan-auto-") && entry.name.endsWith(".json"))
+        .map(async (entry) => {
+          const stats = await fs.stat(path.join(backupDirectory, entry.name));
+          return { name: entry.name, modifiedAt: stats.mtimeMs };
+        }),
+    );
+    const { selectBackupFilesToDelete } = await import("./backup-policy.js");
+    const filesToDelete = selectBackupFilesToDelete(backupFiles, 7);
+    await Promise.all(
+      filesToDelete.map((name) => fs.unlink(path.join(backupDirectory, name))),
+    );
+
+    return { status: "saved", path: filePath, savedAt: savedAt.toISOString() };
+  } catch (error) {
+    return {
+      status: "error",
+      error: error instanceof Error ? error.message : "Automatic backup failed.",
+    };
+  }
+});
+
+app.whenReady().then(async () => {
+  Menu.setApplicationMenu(null);
+  trayNoticeMarkerPath = path.join(app.getPath("userData"), ".tray-notice-shown");
+  try {
+    await fs.access(trayNoticeMarkerPath);
+    hasShownTrayNotice = true;
+  } catch {
+    hasShownTrayNotice = false;
+  }
   createWindow();
   createFloatWindow();
   createTray();
